@@ -99,7 +99,9 @@ public class StatementParser extends PascalParserTD
                 statementNode = caseParser.parse(token);
                 break;
             }
-
+            
+            // TODO: Add case for WHEN **************************
+            
             default: {
                 statementNode = ICodeFactory.createICodeNode(NO_OP);
                 break;

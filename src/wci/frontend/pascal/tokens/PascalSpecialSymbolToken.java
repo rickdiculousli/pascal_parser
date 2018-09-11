@@ -39,6 +39,7 @@ public class PascalSpecialSymbolToken extends PascalToken
         text = Character.toString(currentChar);
         type = null;
 
+        // TODO: Add Arrow Special symbol "=>" ************************
         switch (currentChar) {
 
             // Single-character special symbols.
