@@ -52,7 +52,7 @@ public class PascalSpecialSymbolToken extends PascalToken
             case '=': {
                     currentChar = nextChar();
                     
-                    if(currentChar = '>') {
+                    if(currentChar == '>') {
                         text += currentChar;
                     nextChar();  // consume '>'
                 }

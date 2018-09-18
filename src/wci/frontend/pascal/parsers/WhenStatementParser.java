@@ -30,20 +30,29 @@ public class WhenStatementParser extends StatementParser{
 	//TODO: Enum set for synchronization?
 	
 	//TODO: Create When logic
-	public ICodeNode parse(Token token)
+	public ICodeNode parse(Token token) throws Exception
 	{
 		token = nextToken(); //Consume WHEN
 		
 		// Create an IF node.
         ICodeNode ifNode = ICodeFactory.createICodeNode(ICodeNodeTypeImpl.IF);
+		return ifNode;
         
 	}
 	
-	public void parseCascadingIf(Token token) {
-		token = nextToken(); //Consume WHEN
+	//recursive call to get cascading IF's
+	public ICodeNode parseCascadingIf(Token token) throws Exception {
+		token = nextToken();
 		
-		// Create an IF node.
-        ICodeNode ifNode = ICodeFactory.createICodeNode(ICodeNodeTypeImpl.IF);
+		// Base Case
+		if(token.getType() == OTHERWISE)
+		{
+			return null; // TODO: returns statement Node.
+		}
+		
+		//TODO: Create If nodes childs and recursively call this method in ELSE statement. 
+        
+		return null; //TODO: returns IF node.
         
 	}
 
