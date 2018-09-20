@@ -15,13 +15,10 @@ import static wci.intermediate.icodeimpl.ICodeKeyImpl.*;
 public class WhenStatementParser extends StatementParser{
 	
 	// Synchronization set for WHEN.
-    private static final EnumSet<PascalTokenType> THEN_SET =
-        StatementParser.STMT_START_SET.clone();
-    static {
-        THEN_SET.add(THEN);
-        THEN_SET.addAll(StatementParser.STMT_FOLLOW_SET);
-    }
+    private static final EnumSet<PascalTokenType> ARROW_SET =
+        EnumSet.of(PROCESS_ARROW, IDENTIFIER, BEGIN);
     
+
 	public WhenStatementParser(PascalParserTD parent) 
 	{
 		super(parent);
@@ -78,7 +75,7 @@ public class WhenStatementParser extends StatementParser{
         ifNode.addChild(expressionParser.parse(token));
         
         // Check if current token is the Special symbol "=>"
-        token = currentToken();
+        token = synchronize(ARROW_SET);
         if(token.getType() == PROCESS_ARROW) {
         	token = nextToken();
         	//TODO: Synchornize if NOT the Special arrow.
