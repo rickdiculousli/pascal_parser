@@ -34,25 +34,91 @@ public class WhenStatementParser extends StatementParser{
 	{
 		token = nextToken(); //Consume WHEN
 		
-		// Create an IF node.
-        ICodeNode ifNode = ICodeFactory.createICodeNode(ICodeNodeTypeImpl.IF);
-		return ifNode;
+		return parseCascadingIf();
         
 	}
 	
 	//recursive call to get cascading IF's
-	public ICodeNode parseCascadingIf(Token token) throws Exception {
-		token = nextToken();
+	public ICodeNode parseCascadingIf() throws Exception {
 		
-		// Base Case
+		Token token = currentToken();
+		// Base Case, Return Otherwise statement
 		if(token.getType() == OTHERWISE)
 		{
-			return null; // TODO: returns statement Node.
+			token = nextToken();
+			ICodeNode statementNode = null;
+	        switch ((PascalTokenType) token.getType()) {
+
+	        	case BEGIN: {
+	        		CompoundStatementParser compoundParser =
+	        				new CompoundStatementParser(this);
+	        		statementNode = compoundParser.parse(token);
+	        		break;
+	        		}
+	        	case IDENTIFIER: {
+	        			AssignmentStatementParser assignmentParser =
+	        				new AssignmentStatementParser(this);
+	        			statementNode = assignmentParser.parse(token);
+	        			break;
+	        		}
+	            default: {
+	                statementNode = ICodeFactory.createICodeNode(NO_OP);
+	                break;
+	            }
+	        }
+			return statementNode;
 		}
-		
-		//TODO: Create If nodes childs and recursively call this method in ELSE statement. 
+
+        // Create an IF node.
+        ICodeNode ifNode = ICodeFactory.createICodeNode(ICodeNodeTypeImpl.IF);
+
+        // Parse the expression.
+        // The IF node adopts the expression subtree as its first child.
+        ExpressionParser expressionParser = new ExpressionParser(this);
+        ifNode.addChild(expressionParser.parse(token));
         
-		return null; //TODO: returns IF node.
+        // Check if current token is the Special symbol "=>"
+        token = currentToken();
+        if(token.getType() == PROCESS_ARROW) {
+        	token = nextToken();
+        	//TODO: Synchornize if NOT the Special arrow.
+        }
+        
+        ICodeNode statementNode = null;
+        switch ((PascalTokenType) token.getType()) {
+
+        	case BEGIN: {
+        		CompoundStatementParser compoundParser =
+        				new CompoundStatementParser(this);
+        		statementNode = compoundParser.parse(token);
+        		break;
+        		}
+        	case IDENTIFIER: {
+        			AssignmentStatementParser assignmentParser =
+        				new AssignmentStatementParser(this);
+        			statementNode = assignmentParser.parse(token);
+        			break;
+        		}
+            default: {
+                statementNode = ICodeFactory.createICodeNode(NO_OP);
+                break;
+            }
+        }
+        // TODO: Synchronize if not A statement correct
+        
+        ifNode.addChild(statementNode);
+        
+     // Check if current token is the Special symbol ";"
+        token = currentToken();
+        if(token.getType() == SEMICOLON) {
+        	token = nextToken();
+        	//TODO: Synchornize if NOT the semicolon
+        }
+        
+        // add the recursive cascading IF as a ELSE node.
+        ifNode.addChild(parseCascadingIf());
+        
+		return ifNode; //TODO: returns IF node.
         
 	}
 
