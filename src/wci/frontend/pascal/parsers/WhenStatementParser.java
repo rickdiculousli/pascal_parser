@@ -1,5 +1,8 @@
 package wci.frontend.pascal.parsers;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.util.EnumSet;
 
 import wci.frontend.*;
@@ -14,10 +17,16 @@ import static wci.intermediate.icodeimpl.ICodeKeyImpl.*;
 
 public class WhenStatementParser extends StatementParser{
 	
-	// Synchronization set for WHEN.
+	// Synchronization set for special arrow.
     private static final EnumSet<PascalTokenType> ARROW_SET =
-        EnumSet.of(PROCESS_ARROW, IDENTIFIER, BEGIN);
-    
+        EnumSet.of(PROCESS_ARROW, SEMICOLON);
+    private static final EnumSet<PascalTokenType> FOLLOW_SET =
+    		EnumSet.of(OTHERWISE);
+    static {
+    	FOLLOW_SET.addAll(ExpressionParser.EXPR_START_SET); //Find start of next statement series.
+    	FOLLOW_SET.addAll(StatementParser.STMT_FOLLOW_SET);
+    	ARROW_SET.addAll(StatementParser.STMT_START_SET);
+    }
 
 	public WhenStatementParser(PascalParserTD parent) 
 	{
@@ -42,28 +51,37 @@ public class WhenStatementParser extends StatementParser{
 		// Base Case, Return Otherwise statement
 		if(token.getType() == OTHERWISE)
 		{
-			token = nextToken();
+			 nextToken();
+			 token = synchronize(ARROW_SET);
+		        if(token.getType() == PROCESS_ARROW) {
+		        	token = nextToken();
+		        }else {
+		        	 errorHandler.flag(token, MISSING_ARROW, this);
+		        }
 			ICodeNode statementNode = null;
-	        switch ((PascalTokenType) token.getType()) {
-
-	        	case BEGIN: {
-	        		CompoundStatementParser compoundParser =
-	        				new CompoundStatementParser(this);
-	        		statementNode = compoundParser.parse(token);
-	        		break;
-	        		}
-	        	case IDENTIFIER: {
-	        			AssignmentStatementParser assignmentParser =
-	        				new AssignmentStatementParser(this);
-	        			statementNode = assignmentParser.parse(token);
-	        			break;
-	        		}
-	            default: {
-	                statementNode = ICodeFactory.createICodeNode(NO_OP);
-	                break;
-	            }
+	        
+			if((PascalTokenType) token.getType() == IDENTIFIER ||(PascalTokenType) token.getType() == BEGIN) {
+	        	StatementParser statementParser = new StatementParser(this);
+	        	statementNode = statementParser.parse(token);
 	        }
-			return statementNode;
+	        else {
+	        	 statementNode = ICodeFactory.createICodeNode(NO_OP);
+	        	 errorHandler.flag(token, INVALID_STATEMENT, this);
+	        }
+	        
+	        token = synchronize(FOLLOW_SET);
+	        if(token.getType() != END)
+	        {
+	        	errorHandler.flag(token, MISSING_END, this);
+	        }else {
+	        	token = nextToken();
+	        }
+//	        if(token.getType() != SEMICOLON) {
+//	        	errorHandler.flag(token, MISSING_SEMICOLON, this);
+//	        }else {
+//	        	nextToken();
+//	        }
+	        return statementNode;
 		}
 
         // Create an IF node.
@@ -78,42 +96,39 @@ public class WhenStatementParser extends StatementParser{
         token = synchronize(ARROW_SET);
         if(token.getType() == PROCESS_ARROW) {
         	token = nextToken();
-        	//TODO: Synchornize if NOT the Special arrow.
+        }else {
+        	 errorHandler.flag(token, MISSING_ARROW, this);
         }
         
         ICodeNode statementNode = null;
-        switch ((PascalTokenType) token.getType()) {
-
-        	case BEGIN: {
-        		CompoundStatementParser compoundParser =
-        				new CompoundStatementParser(this);
-        		statementNode = compoundParser.parse(token);
-        		break;
-        		}
-        	case IDENTIFIER: {
-        			AssignmentStatementParser assignmentParser =
-        				new AssignmentStatementParser(this);
-        			statementNode = assignmentParser.parse(token);
-        			break;
-        		}
-            default: {
-                statementNode = ICodeFactory.createICodeNode(NO_OP);
-                break;
-            }
+        
+        if((PascalTokenType) token.getType() == IDENTIFIER ||(PascalTokenType) token.getType() == BEGIN) {
+        	StatementParser statementParser = new StatementParser(this);
+        	statementNode = statementParser.parse(token);
         }
-        // TODO: Synchronize if not A statement correct
+        else {
+        	 statementNode = ICodeFactory.createICodeNode(NO_OP);
+        	 errorHandler.flag(token, INVALID_STATEMENT, this);
+        }
         
         ifNode.addChild(statementNode);
         
      // Check if current token is the Special symbol ";"
-        token = currentToken();
+        token = synchronize(FOLLOW_SET);
         if(token.getType() == SEMICOLON) {
         	token = nextToken();
-        	//TODO: Synchornize if NOT the semicolon
+        }else {
+        	 errorHandler.flag(token, MISSING_SEMICOLON, this);
         }
         
         // add the recursive cascading IF as a ELSE node.
-        ifNode.addChild(parseCascadingIf());
+        if(token.getType() != END) {
+        	 ifNode.addChild(parseCascadingIf());
+        }else {
+        	errorHandler.flag(token, MISSING_OTHERWISE, this);
+        	nextToken();
+        }
+       
         
 		return ifNode; //TODO: returns IF node.
         

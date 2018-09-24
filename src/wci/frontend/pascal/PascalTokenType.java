@@ -33,10 +33,10 @@ public enum PascalTokenType implements TokenType
     ERROR, END_OF_FILE;
 
     private static final int FIRST_RESERVED_INDEX = AND.ordinal();
-    private static final int LAST_RESERVED_INDEX  = WITH.ordinal();
+    private static final int LAST_RESERVED_INDEX  = WHEN.ordinal();
 
     private static final int FIRST_SPECIAL_INDEX = PLUS.ordinal();
-    private static final int LAST_SPECIAL_INDEX  = DOT_DOT.ordinal();
+    private static final int LAST_SPECIAL_INDEX  = PROCESS_ARROW.ordinal();
 
     private String text;  // token text
 
